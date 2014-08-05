@@ -15,88 +15,112 @@
  */
 package com.hipmob.gifanimationdrawable;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.Bitmap;
 
 /**
- * <p>Creates an AnimationDrawable from a GIF image.</p>
+ * Creates an AnimationDrawable from a GIF image.
  *
  * @author Femi Omojola <femi@hipmob.com>
  */
-public class GifAnimationDrawable extends AnimationDrawable
-{
-	private boolean decoded;
-	
-	private GifDecoder mGifDecoder;
+public class GifAnimationDrawable extends AnimationDrawable {
+    private static final String TAG = GifAnimationDrawable.class.getName();
 
-	private Bitmap mTmpBitmap;
+    private boolean mDecoded;
+    private GifDecoder mGifDecoder;
+    private Bitmap mTmpBitmap;
+    private Resources mRes;
+    private int mHeight, mWidth;
 
-	private int height, width;
-	
-	public GifAnimationDrawable(File f) throws IOException
-	{
-		this(f, false);
-	}
-	
-	public GifAnimationDrawable(InputStream is) throws IOException
-	{
-		this(is, false);
-	}
-	
-	public GifAnimationDrawable(File f, boolean inline) throws IOException
-	{
-	    this(new BufferedInputStream(new FileInputStream(f), 32768), inline);
-	}
-	
-	public GifAnimationDrawable(InputStream is, boolean inline) throws IOException
-	{
-		super();
-		InputStream bis = is;
-		if(!BufferedInputStream.class.isInstance(bis)) bis = new BufferedInputStream(is, 32768);
-		decoded = false;
-		mGifDecoder = new GifDecoder();
-		mGifDecoder.read(bis);
-		mTmpBitmap = mGifDecoder.getFrame(0);
-		android.util.Log.v("GifAnimationDrawable", "===>Lead frame: ["+width+"x"+height+"; "+mGifDecoder.getDelay(0)+";"+mGifDecoder.getLoopCount()+"]");
-		height = mTmpBitmap.getHeight();
-    	width = mTmpBitmap.getWidth();
-        addFrame(new BitmapDrawable(mTmpBitmap), mGifDecoder.getDelay(0));
+    private Runnable mLoader = new Runnable() {
+        public void run() {
+            mGifDecoder.complete();
+            int i, n = mGifDecoder.getFrameCount(), t;
+            for (i = 1; i < n; i++) {
+                mTmpBitmap = mGifDecoder.getFrame(i);
+                t = mGifDecoder.getDelay(i);
+                addFrame(new BitmapDrawable(mRes, mTmpBitmap), t);
+            }
+            mDecoded = true;
+            mGifDecoder = null;
+        }
+    };
+
+    public GifAnimationDrawable(Resources res, File f) throws IOException {
+        this(res, f, false);
+    }
+
+    public GifAnimationDrawable(Resources res, InputStream is) throws IOException {
+        this(res, is, false);
+    }
+
+    public GifAnimationDrawable(Resources res, File f, boolean inline) throws IOException {
+        this(res, new BufferedInputStream(new FileInputStream(f), 32768), inline);
+    }
+
+    public GifAnimationDrawable(Resources res, InputStream is, boolean inline) throws IOException {
+        super();
+
+        InputStream bis;
+        if (!BufferedInputStream.class.isInstance(is)) {
+            bis = new BufferedInputStream(is, 32768);
+        } else {
+            bis = is;
+        }
+
+        mRes = res;
+        mDecoded = false;
+        mGifDecoder = new GifDecoder();
+        mGifDecoder.read(bis);
+
+        mTmpBitmap = mGifDecoder.getFrame(0);
+        mHeight = mTmpBitmap.getHeight();
+        mWidth = mTmpBitmap.getWidth();
+        addFrame(new BitmapDrawable(mRes, mTmpBitmap), mGifDecoder.getDelay(0));
+
         setOneShot(mGifDecoder.getLoopCount() != 0);
-        setVisible(true, true);
-		if(inline){
-			loader.run();
-		}else{
-			new Thread(loader).start();
-		}
-	}
-	
-	public boolean isDecoded(){ return decoded; }
-	
-	private Runnable loader = new Runnable(){
-		public void run() 
-		{
-			mGifDecoder.complete();
-			int i, n = mGifDecoder.getFrameCount(), t;
-	        for(i=1;i<n;i++){
-	            mTmpBitmap = mGifDecoder.getFrame(i);
-	            t = mGifDecoder.getDelay(i);
-	            android.util.Log.v("GifAnimationDrawable", "===>Frame "+i+": "+t+"]");
-	            addFrame(new BitmapDrawable(mTmpBitmap), t);
-	        }
-	        decoded = true;
-	        mGifDecoder = null;
-	    }
-	};
-	
-	public int getMinimumHeight(){ return height; }
-	public int getMinimumWidth(){ return width; }
-	public int getIntrinsicHeight(){ return height; }
-	public int getIntrinsicWidth(){ return width; }
+
+        if (inline) {
+            mLoader.run();
+        } else {
+            new Thread(mLoader).start();
+        }
+    }
+
+    public void recycle() {
+        stop();
+        for (int i = 0; i < getNumberOfFrames(); i++) {
+            BitmapDrawable drawable = (BitmapDrawable) getFrame(i);
+            Bitmap bm = drawable.getBitmap();
+            bm.recycle();
+        }
+    }
+
+    public boolean isDecoded() {
+        return mDecoded;
+    }
+
+    public int getMinimumHeight() {
+        return mHeight;
+    }
+
+    public int getMinimumWidth() {
+        return mWidth;
+    }
+
+    public int getIntrinsicHeight() {
+        return mHeight;
+    }
+
+    public int getIntrinsicWidth() {
+        return mWidth;
+    }
 }

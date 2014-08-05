@@ -11,33 +11,33 @@ And...we're done. See how to use it below.
 
 How
 ===
-Simply pass the image File or InputStream into the appropriate constructor:
+Simply pass the image File or InputStream into the appropriate constructor. A Resource object is needed for screen density information.
 
 ```java
-AnimationDrawable drawable = new GifAnimationDrawable(File source);
+AnimationDrawable drawable = new GifAnimationDrawable(Resource res, File source);
 ```
 
 or
 
 ```java
-AnimationDrawable drawable = new GifAnimationDrawable(InputStream source);
+AnimationDrawable drawable = new GifAnimationDrawable(Resource res, InputStream source);
 ```
 
 By default a <code>Thread</code> will be created to process the GIF frames (making the default operation safe to use on the main Android app thread): you can call the <code>isDecoded</code> method to be informed when the processing is complete. If you're loading this in an existing AsyncTask or other background thread, you can pass in a parameter to tell it to process the frames without spawning a new thread:
 
 ```java
-AnimationDrawable drawable = new GifAnimationDrawable(File source, true);
+AnimationDrawable drawable = new GifAnimationDrawable(Resource res, File source, true);
 ```
 
 or
 
 ```java
-AnimationDrawable drawable = new GifAnimationDrawable(InputStream source, true);
+AnimationDrawable drawable = new GifAnimationDrawable(Resource res, InputStream source, true);
 ```
 
 Build
 =====
-The library build uses **ant**: you will need to have the ANDROID_SDK environment variable setup (or edit the ***build.xml*** file to point to the right place).
+The library build uses **ant**: you will need to have the ANDROID_SDK environment variable setup (or edit the ***build.xml*** file to point to the right place). The build is configured to use SDK 19. Edit ***build.xml*** if you want to use a different SDK version.
 
 Open a shell in the ***library*** directory and run **ant**. The JAR file produced (***gifanimationdrawable.jar***) will contain the required files: add it to your Android app's **libs** folder, and then import the <code>com.hipmob.gifanimationdrawable.GifAnimationDrawable</code> class.
 

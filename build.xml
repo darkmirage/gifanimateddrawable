@@ -3,7 +3,7 @@
   <property environment="env"/>
   
   <path id="build.classpath">    
-    <fileset dir="${env.ANDROID_SDK}\platforms\android-2.0">
+    <fileset dir="${env.ANDROID_SDK}\platforms\android-19">
       <include name="android.jar" />
     </fileset>
   </path>
@@ -41,7 +41,7 @@
   
   <target name="package" depends="compile">
     <mkdir dir="${dist}" />  
-    <jar destfile="${dist}/${ant.project.name}.jar" basedir="${build}">
+    <jar destfile="${dist}/${ant.project.name}.jar">
       <fileset dir="${build}">
 	<include name="com/hipmob/gifanimationdrawable/*.class" />
       </fileset>

@@ -5,3 +5,4 @@ dist
 build
 resources/*.class
 docs/api*
+*.DS_STORE
